@@ -1,0 +1,51 @@
+#+TITLE: Small Compiler in Go: First project
+#+AUTHOR: Simon El Hadidi
+#+DATE: <2026-09-04 Fri>
+
+AI Responses are explicitly listed under ASCII
+
+** Main File
+** Driver
+- syntax:
+  - https://gobyexample.com/reading-files
+  i also noticed that there are no parentheses around the if, like in Python. it feels a little bit loose tbh, for the fact that it's a compiled language
+  but to be honest, parentheses are easy to avoid especially with any low tier modern parser
+  it's mostly force of habit on my end, from recreational C and academic Java
+- types: https://gosamples.dev/print-type
+  i am not really used to having no symbols delimit the type of an object after the name. in Python it's done with ~<name>: <type>~
+  Java and C have ~<type> <name>~, but i guess that makes sense in Go: ~<name>~, of which the type is ~<type>~,...
+  very interesting
+- cmdline arguments: https://gobyexample.com/command-line-arguments
+  similar to python it seems. that's pretty funky
+- global variables:
+  - https://golangdocs.com/golang-global-variables
+  - https://stackoverflow.com/questions/22991798/go-and-namespaces-is-it-possible-to-achieve-something-similar-to-python#22992969
+  reason: have one isolated driver as a singleton to parse the arguments like LLVM does it, so i can follow their engineering instead of making my own
+- classes don't exist, structs are PoDs like in C
+  - https://gobyexample.com/structs
+- access specification: https://stackoverflow.com/questions/20850047/public-private-upper-case-lower-case
+  it turns out that capitalisation is its own syntactic object, acting as an access specifier
+  that is very interesting, i like it a lot
+
+only concern now is, how would you engineer this idiosyncratically, native to the language?
+#+BEGIN_EXPORT ascii
+= Prompt:
+I am designing a compiler in go. What is the intended way to design the interface between driver -> lexer -> parser -> sema -> codegen?
+
+In java you would write a class
+In C you would have either a struct or a global variable
+In python you would have a dynamic list passed into functions
+In javascript you do whatever you like
+
+What is the idiosyncratic design premise of go?
+= Response (i only care about this part):
+Go's answer is: the package is the class, the exported function is the constructor-plus-method, and the state lives in an unexported struct that nobody outside can see. Data between phases is dumb — plain structs with exported fields and no behavior.
+#+END_EXPORT
+this is surprisingly nice tbh. that's like in C but with higher level, in C you'd have a header with the individual functions and a TU global variable if you want mock-encapsulation
+Here you have encapsulation at a language level
+
+** Lexer
+** Parser
+** Semana
+** CodeGen
+** Bytecode VM
