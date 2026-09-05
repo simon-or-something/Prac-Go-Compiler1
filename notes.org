@@ -71,6 +71,7 @@ AI Responses are explicitly listed under markdown
   - [ ] main
   - [ ] RunDriver
   - [ ] Lex
+  - [ ] lexemeLength
 
 ** Main File
 ** Driver
@@ -198,6 +199,41 @@ while one file is being asynchronously read a block is being parsed
 which may actually be a good way to practice goroutines, but in all seriousness, I cannot be bothered. This is on the roadmap though
 lexeme types: what are special / dedicated types of character chains? [8]
 now to make a token "stream": [9]
+
+#+BEGIN_EXPORT markdown
+# Prompt:
+I have a function firstzero going like so:
+
+```go
+func firstzero(lst []int, idx int) (int, error) {
+  // ...
+}
+```
+
+If there are no zeros, should i return sentinel value `-1` or should i return a non `nil` error?
+# Response
+Not an error. In Go, "I searched and there wasn't one" is a normal result, not a failure. The standard library is consistent about this: `strings.Index`, `bytes.IndexByte`, and friends all return -1, and `sort.Search` returns `len(a)`. Errors are for things that went wrong — a bad argument, a failed syscall, a malformed input — not for the negative answer to a legitimate question.
+
+So I'd drop the error entirely:
+
+```go
+// firstzero returns the index of the first zero at or after idx,
+// or -1 if there is none.
+func firstzero(lst []int, idx int) int
+```
+
+The other good option is the comma-ok form, which is a bit more self-documenting at the call site:
+
+```go
+func firstzero(lst []int, idx int) (int, bool)
+
+if i, ok := firstzero(lst, 0); ok {
+    // use i
+}
+```
+...
+#+END_EXPORT
+Technically, this isn't the same as ~matchCategory~, but it's similar enough to be acceptable in my books
 ** Parser
 ** Semana
 ** CodeGen
