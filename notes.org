@@ -2,34 +2,82 @@
 #+AUTHOR: Simon El Hadidi
 #+DATE: <2026-09-04 Fri>
 
-AI Responses are explicitly listed under ASCII
+AI Responses are explicitly listed under markdown
 
-** Main File
-** Driver
-- syntax:
+** Main Notes
+1. syntax:
   - https://gobyexample.com/reading-files
   i also noticed that there are no parentheses around the if, like in Python. it feels a little bit loose tbh, for the fact that it's a compiled language
   but to be honest, parentheses are easy to avoid especially with any low tier modern parser
   it's mostly force of habit on my end, from recreational C and academic Java
-- types: https://gosamples.dev/print-type
+2. types: https://gosamples.dev/print-type
   i am not really used to having no symbols delimit the type of an object after the name. in Python it's done with ~<name>: <type>~
   Java and C have ~<type> <name>~, but i guess that makes sense in Go: ~<name>~, of which the type is ~<type>~,...
   very interesting
-- cmdline arguments: https://gobyexample.com/command-line-arguments
+3. cmdline arguments: https://gobyexample.com/command-line-arguments
   similar to python it seems. that's pretty funky
-- global variables:
+4. global variables:
   - https://golangdocs.com/golang-global-variables
   - https://stackoverflow.com/questions/22991798/go-and-namespaces-is-it-possible-to-achieve-something-similar-to-python#22992969
   reason: have one isolated driver as a singleton to parse the arguments like LLVM does it, so i can follow their engineering instead of making my own
-- classes don't exist, structs are PoDs like in C
+5. classes don't exist, structs are PoDs like in C
   - https://gobyexample.com/structs
-- access specification: https://stackoverflow.com/questions/20850047/public-private-upper-case-lower-case
+6. access specification: https://stackoverflow.com/questions/20850047/public-private-upper-case-lower-case
   it turns out that capitalisation is its own syntactic object, acting as an access specifier
   that is very interesting, i like it a lot
+7. Go modules have been chaotic but i think i get them now:
+   - https://go.dev/doc/modules/layout
+   - https://go.dev/doc/tutorial/create-module
+   #+BEGIN_EXPORT markdown
+   # Prompt:
+   How come the Go module structure is so different to the typical layout, C/C++/Java/Python has the src dir, Flutter has lib, why is go different?
+   Usually projects are structured as
+   root
+   | src (or lib)/{test,dir1,dir2,dir3}
+   | tools
+   | obj / deps / build / etc
 
+   # Response:
+   The core reason: in Go, the import path is the directory path, with no build system in between.
+
+   When you write import "github.com/you/myproj/dir1", that string is literally the repo URL plus the subdirectory. go get fetches from the VCS and looks in that folder. There's no packaging step that repackages your source into a jar/wheel/artifact and remaps paths along the way.
+
+   So a src/ directory doesn't disappear at the boundary the way it does elsewhere — it becomes a permanent segment in every import statement, in every doc URL, in everything anyone types to use your code:
+   ```go
+   import "github.com/you/myproj/src/dir1"   // the src is now forever
+   ```
+   In C++, src/ is invisible to consumers because CMake has include dirs and you ship headers. In Java, src/main/java is stripped because the compiler maps packages to a classpath and you ship a jar. In Python, setup.py/pyproject.toml declares package_dir and you ship a wheel. Each of those has an indirection layer that lets the on-disk layout differ from the logical one. Go deliberately has none — that's the whole point of the design. The tool discovers packages by walking directories, so an extra layer buys nothing and costs you a word in every import.
+
+   A few smaller contributors:
+   - Nothing to separate source from. src/ usually exists in opposition to build/, obj/, target/, dist/. Go's compiled output goes to a cache under ~/.cache/go-build, and binaries go wherever -o says. The source tree stays clean, so the partition has no other half.
+   - Tests live beside the code. dir1_test.go sits next to dir1.go — same directory, same package, so tests can reach unexported identifiers. Java's src/main vs src/test split is a large part of why that tree is so deep; Go doesn't need the parallel hierarchy.
+   - Historical residue. Before modules (Go 1.11, default from 1.16) there was a src/ — but one level up, in the shared workspace: $GOPATH/src/github.com/you/myproj. The src directory belonged to the workspace, not the project, so putting another one inside would have been doubly redundant. Modules removed GOPATH; the habit stuck.
+   - The standard library models it. net/http, encoding/json, os/exec — flat, shallow, one directory per package, no ceremony. That's the reference people imitate.
+   - Rust is the honest counterexample, by the way — it has src/ with main.rs/lib.rs, because Cargo does provide that mapping layer. So it isn't Go against the world; it's a consequence of Go choosing to have no build configuration at all.
+   - The practical upshot for a first project: start flat. go.mod and a few .go files at the root is a perfectly idiomatic small program. Add cmd/ when you genuinely have a second binary, add internal/ when you want the compiler to stop outsiders importing something, and otherwise let directories appear only when a package earns one.
+   #+END_EXPORT
+   that is very interesting. fair enough
+8. Enums
+   - https://gobyexample.com/enums
+   that is very interesting, it seems like sugar? enums are in and of itself implementable as sugar and they sometimes are, so it makes sense
+9. Lists
+   - https://stackoverflow.com/questions/21326109/why-are-lists-used-infrequently-in-go
+   - https://go.dev/wiki/SliceTricks
+   apparently lists are evil. my lisp life is a lie
+** Roadmap
+- [ ] make () retroactively required for conditions
+- [ ] pipeline parsing with goroutines
+- [-] add error handling for
+  - [ ] main
+  - [ ] RunDriver
+  - [ ] Lex
+
+** Main File
+** Driver
+[1-6]
 only concern now is, how would you engineer this idiosyncratically, native to the language?
-#+BEGIN_EXPORT ascii
-= Prompt:
+#+BEGIN_EXPORT markdown
+# Prompt:
 I am designing a compiler in go. What is the intended way to design the interface between driver -> lexer -> parser -> sema -> codegen?
 
 In java you would write a class
@@ -38,13 +86,118 @@ In python you would have a dynamic list passed into functions
 In javascript you do whatever you like
 
 What is the idiosyncratic design premise of go?
-= Response (i only care about this part):
+# Response (i only care about this part):
 Go's answer is: the package is the class, the exported function is the constructor-plus-method, and the state lives in an unexported struct that nobody outside can see. Data between phases is dumb — plain structs with exported fields and no behavior.
 #+END_EXPORT
 this is surprisingly nice tbh. that's like in C but with higher level, in C you'd have a header with the individual functions and a TU global variable if you want mock-encapsulation
 Here you have encapsulation at a language level
 
+[7]
+now to the language design. i am too lazy for this, to be entirely honest, syntax is skill issue and i am agnostic to syntax
+#+BEGIN_EXPORT markdown
+# Prompt:
+Design me syntax for a very basic programming language. I cant decide between a lisp,
+<rettype> <name>(<arg>*) <body>
+func <name>(<arg>*) <body>
+where arg is
+<type> <name>
+<name><sep><type> where sep is either a space or a dedicated symbol like in python
+where body is
+{ }
+begin end
+
+Just generate me some basic syntax, nothing too complex please
+AoT compiled language, the stuff youd write in an evening so to speak
+
+# Response:
+Go with `func` + `name: type` + `{ }`. Reasoning, briefly:
+
+The leading `func` keyword makes your parser LL(1) at top level, so you never have to guess whether you're looking at a declaration or an expression. C-style `int foo(...)` forces you to either keep types as a closed keyword set or do lookahead/backtracking, which is exactly the kind of thing that eats an evening. `name: type` has the same property inside the parameter list: the first token is always an identifier, so you never branch on "is this a type or a name." It also makes type inference trivial to bolt on later by just making the `: type` part optional.
+
+`{ }` over `begin end` because it's one token instead of a keyword, and you can reuse the same block rule for `if`, `while`, and function bodies without inventing `then`/`do`/`endif`.
+
+## Sample
+
+```
+// line comment
+
+func fib(n: int) -> int {
+    if n < 2 {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+func main() -> int {
+    let i: int = 0;
+    while i < 10 {
+        print(fib(i));
+        i = i + 1;
+    }
+    return 0;
+}
+```
+
+Paren-less conditions work here only because the language has no brace-initialized composite literals. If you ever add `Point{1, 2}`, you'll hit the Go ambiguity and have to either require parens or restrict literals in condition position. Requiring `if (cond)` from the start costs you nothing if you think you'll want structs.
+
+## Grammar
+
+```ebnf
+program  = decl* ;
+decl     = "func" IDENT "(" [params] ")" ["->" type] block ;
+params   = param { "," param } ;
+param    = IDENT ":" type ;
+type     = IDENT ;
+
+block    = "{" stmt* "}" ;
+stmt     = "let" IDENT ":" type "=" expr ";"
+         | "return" [expr] ";"
+         | "if" expr block ["else" block]
+         | "while" expr block
+         | IDENT "=" expr ";"
+         | expr ";" ;
+
+expr     = ...precedence climbing... ;
+primary  = INT | IDENT | "(" expr ")" | IDENT "(" [args] ")" ;
+args     = expr { "," expr } ;
+```
+
+The only place you need two tokens of lookahead is distinguishing `x = ...` from `f(x);`, so peek at the token after `IDENT` and you're done.
+
+## Tokens
+
+Keywords: `func let return if else while true false`
+Types (just predeclared identifiers, not keywords): `int bool void`
+Punctuation: `( ) { } , ; : ->`
+Operators: `+ - * / % == != < <= > >= && || ! =`
+
+Binding power for precedence climbing, loosest to tightest:
+
+```
+1  ||
+2  &&
+3  == !=
+4  <  <=  >  >=
+5  +  -
+6  *  /  %
+7  unary -  !
+8  call
+```
+
+All left-associative except unary. That's a single `parse_expr(min_bp)` function of about thirty lines.
+
+## On the Lisp option
+
+Lisp wins on one axis only, which is that the parser is a reader of maybe 60 lines and you get to skip precedence entirely. If your goal is "compiling something by midnight," that's real. But the savings are front-loaded into the part of the compiler that's easiest anyway, and you pay for it afterward: your typechecker and codegen still have to pattern-match on list shapes and produce decent errors when someone writes `(func foo (a) )` with a missing body. The grammar above is maybe two extra hours of work total and gives you a language you'd actually want to write test programs in.
+#+END_EXPORT
+i will not make ( ) around conditions despite me wanting to have structs. reason: because i can (and because, realistically speaking, this is not too complex to implement but still is good practice)
+
 ** Lexer
+now one thing would be to read it in chunks / blocks and do some pipelining process
+while one file is being asynchronously read a block is being parsed
+which may actually be a good way to practice goroutines, but in all seriousness, I cannot be bothered. This is on the roadmap though
+lexeme types: what are special / dedicated types of character chains? [8]
+now to make a token "stream": [9]
 ** Parser
 ** Semana
 ** CodeGen
