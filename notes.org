@@ -4,6 +4,12 @@
 
 AI Responses are explicitly listed under markdown
 
+Note that I don't yet have any formal / credible education in compilers
+All this is, is me having picked stuff up randomly throughout the years
+I refuse to follow tutorials because:
+1. tutorial hell
+2. I should know my stuff to such an extent that I can follow my knowledge blindly
+
 ** Main Notes
 1. syntax:
   - https://gobyexample.com/reading-files
@@ -234,6 +240,36 @@ if i, ok := firstzero(lst, 0); ok {
 ...
 #+END_EXPORT
 Technically, this isn't the same as ~matchCategory~, but it's similar enough to be acceptable in my books
+I had a sort of writers block because I was frustrated and thought I should stop this project
+However, one of my exams have passed, and there's no time like the present
+I didn't really know how I want the lexer implemented, so there is this:
+1. using the raw char to match the type ad hoc (letter, punctuation, delimiter...)
+   that was my first idea but that's so much unnecessary work
+   that's the stuff you'd make in C / non modern languages
+   the goal is to learn the language not to port ideas
+2. Regex based matching
+   second idea, but the crux then becomes that i need  a regex compiler
+   Regex-based matching sucks for LISP beyond token matching
+#+BEGIN_EXPORT markdown
+# Prompt:
+Given is an array structured as such:
+
+```go
+var array = []string {
+  "pa(}tern1",
+  "pattern2",
+  "pattern3",
+};
+```
+
+How do i create a regular expression from this?
+Some patterns includes regex characters such as [ ] ( ) . , + - ?
+How do i go about this without escaping them?
+
+# Response:
+regexp.QuoteMeta does exactly this — it takes a literal string and returns a regex that matches it, escaping whatever needs escaping.
+...
+#+END_EXPORT
 ** Parser
 ** Semana
 ** CodeGen
