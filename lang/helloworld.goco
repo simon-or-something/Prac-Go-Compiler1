@@ -4,5 +4,6 @@ func main() -> int {
      print("Hello, World!");
      // it looks and feels a lot like the son of Javascript and Python with some C
      // idk if i like the syntax, but tbh only the lexer and the parser need to then be changed
+     // besides, syntax is skill issue
      return 0
 }

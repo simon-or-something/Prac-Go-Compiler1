@@ -11,6 +11,9 @@ import (
 
 func main() {
 	lang_opts, _ := driver.RunDriver(os.Args)
-	lexer.Lex(lang_opts.Infile)
+	lexemes, _ := lexer.Lex(lang_opts.Infile)
+	for i := range len(lexemes) {
+		fmt.Println(lexemes[i])
+	}
 	fmt.Printf("%T\n", unicode.IsDigit)
 }
