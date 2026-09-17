@@ -300,6 +300,22 @@ I fixed 3 bugs:
    My lexemes were 1 long because I did ~len([]string)~ instead of ~len(string~
 Lexer is done, now I am in familiar territory
 ** Parser
+Let it be known that the goal of a parser is to (not in order):
+- create and check the structure for and of the code,
+- create a uniform interface for frontends to interface
+- reorganise code and to catch errors
+- do syntax transformations (Rusts macro system + homoiconicity, although LISP doesn't need to a standard AST, you can do an S-Expr tree immediately)
+- advanced semantic analysis
+Simple compilers don't really need an AST, because unless you have fancy stuff like
+- the need for a uniform backend,
+- syntax transformations,
+- code as data (LISP <3),
+- or advanced semantic analysis
+you don't need a very detailed AST
+This is also where the BNF is "checked", although there is no real "checking": you define parse rules for the language, and the (e)BNF describes it
+BNFs are not actually used in manual compiler writing, manual here meaning without parser generators or other funky nonsense
+BNFs just describe the language implemented, and don't really prescribe it (unless you use a parser generator)
+
 ** Semana
 ** CodeGen
 ** Bytecode VM
