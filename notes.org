@@ -10,6 +10,12 @@ I refuse to follow tutorials because:
 1. tutorial hell
 2. I should know my stuff to such an extent that I can follow my knowledge blindly
 
+** Todo:
+*** Lexer:
+- error catching
+- make a map for lexeme type to its regex
+- not yet implemented
+
 ** Main Notes
 1. syntax:
   - https://gobyexample.com/reading-files
@@ -270,6 +276,29 @@ How do i go about this without escaping them?
 regexp.QuoteMeta does exactly this — it takes a literal string and returns a regex that matches it, escaping whatever needs escaping.
 ...
 #+END_EXPORT
+#+BEGIN_EXPORT markdown
+# Prompt:
+How do i print the match of a regex in go at the beginning of a string?
+
+# Response:
+In Go you use the regexp package from the standard library. Compile the pattern, then call one of the Find methods:
+
+# Prompt:
+How do i print the match of a regex in go at the beginning of a string?
+
+# Response:
+Anchor the pattern with ^, which matches only at the start of the input:
+#+END_EXPORT
+Okay yeah the last prompt was a little bit stupid not going to lie, but it does give me fresh wind:
+Of course the anchor would find it at the beginning of the string, and of course ~FindString~ would find the string
+I didn't connect them, because I didn't want to put ~^~ at every single token, but I can manually prepend it at each regex check
+
+I fixed 3 bugs:
+1. I used QuoteMeta twice
+2. I could've used FindString to find the regex with an ~^~ but I didn't
+3. FindStringSubmatch returns a ~[]string~ not a ~string~
+   My lexemes were 1 long because I did ~len([]string)~ instead of ~len(string~
+Lexer is done, now I am in familiar territory
 ** Parser
 ** Semana
 ** CodeGen

@@ -14,19 +14,31 @@ type LexemeLength int // this is a trick i do in mock-professional C
 // the issue is that Go seems to have nominal typing
 // this is *safer* for types, but that means the trick doesn't work here
 
+type fileloc struct {
+	X, Y int
+} // vec2<int>
+
+type Lexeme struct {
+	Ltype    LexemeType
+	Src_loc  fileloc // struct {x, y int} // oh lol this works
+	Src_file string
+	Raw_text string // stupid of me to not include that wtf lmao
+	// is this my first time??
+}
+
 // ill use regex based matching, see 'BraCkish' for a C implementation for a LISP
 const (
 	//LexemeNull     LexemeType = iota
-	LexemeOperator LexemeType = iota // + - -> . ° x..y ...
-	LexemeKeyword                    // word bro, word
-	LexemeWhiteSpc                   // part of me wants to make operator precedence based on whitespace
-	LexemeDelim                      //  { } [ ] ( ) ... split because makes parsing easier
-	LexemeNumeric                    // checks for one . specifically, or an f
-	LexemeString                     // special parse rule, don't split on space / different type
-	LexemeComment
-	LexemeSymbol // user variables, follows a scheme
-	// LexemeBool // Booleans don't exist, https://en.wikipedia.org/wiki/Church_encoding
-	//LexemeLiteral // not this and instead ...Numeric and ...String because this makes parsing easier down the line
+	LexemeComment  LexemeType = iota
+	LexemeOperator            // + - -> . ° x..y ...
+	LexemeKeyword             // word bro, word
+	LexemeWhiteSpc            // part of me wants to make operator precedence based on whitespace
+	LexemeDelim               //  { } [ ] ( ) ... split because makes parsing easier
+	LexemeNumeric             // checks for one . specifically, or an f
+	LexemeString              // special parse rule, don't split on space / different type
+	LexemeSymbol              // user variables, follows a scheme
+	// LexemeBool     // Booleans don't exist, https://en.wikipedia.org/wiki/Church_encoding
+	//LexemeLiteral  // not this and instead ...Numeric and ...String because this makes parsing easier down the line
 	LexemeEOF
 	LexemeError // that's useful. not a pattern itself but useful for parsing
 ) // LexemeType
@@ -44,7 +56,12 @@ var arr = [][]string {
 // some of these keywords are horribly cursed, I am well aware of this
 // but you cannot stop me
 // MARK: it is absolutely imperative that the LexemeType corresponds to the index in lexeme_patterns
+// I WROTE THIS COMMENT BUT I DIDNT FOLLOW IT
 var lexeme_patterns = [][]string{
+	{
+		"\\/\\/.*\n?", // according to regex101, this _should_ work
+		"\\/\\*.*?\\*\\/", // https://regex101.com/
+	}, // LexemeComment.
 	{
 		regexp.QuoteMeta("->"),  //     nyi: copy | proof / implication
 		regexp.QuoteMeta("<-"),  //     nyi: storage | suggestion
@@ -80,36 +97,37 @@ var lexeme_patterns = [][]string{
 		regexp.QuoteMeta("#"),   //     nyi: to raw bytes
 	}, // LexemeOperator
 	{
-		regexp.QuoteMeta("nil"),        // null, active sentinel value
-		regexp.QuoteMeta("func"),       // for functions like in go
-		regexp.QuoteMeta("class"),      //     nyi: classes, PODs by default
-		regexp.QuoteMeta("import"),     //     nyi: self explanatory
-		regexp.QuoteMeta("pure"),       //     nyi: optimisation directive
-		regexp.QuoteMeta("static"),     //     nyi: non local storage declaration
-		regexp.QuoteMeta("debug"),      // prints the AST / relevant info at that location
-		regexp.QuoteMeta("assert"),     // crashes on bool expression being false
-		regexp.QuoteMeta("switch"),     //     nyi: hash search for conditions
-		regexp.QuoteMeta("case"),       //     nyi: individual cases for the hash search
-		regexp.QuoteMeta("defer"),      //     nyi: execution at the end of scope
-		regexp.QuoteMeta("continue"),   //     nyi: syntax sugar for ~goto~ loop / if not applies:
-		regexp.QuoteMeta("delete"),     //     nyi: storage deletion
-		regexp.QuoteMeta("false"),      // desugars to 0
-		regexp.QuoteMeta("true"),       // desugars to 1
-		regexp.QuoteMeta("for"),        // init + condition + step based loop
-		regexp.QuoteMeta("while"),      //     nyi: condition based loop, can be chained with do
-		regexp.QuoteMeta("until"),      //     nyi: reverse while but can be chained with do
-		regexp.QuoteMeta("do"),         //     nyi: execution + check based loop
-		regexp.QuoteMeta("break"),      //     nyi: stop loop execution
-		regexp.QuoteMeta("goto"),       //     nyi: deprecated (XDXD)
-		regexp.QuoteMeta("lngjmp"),     //     nyi: goto + explicit side entry into different scopes
-		regexp.QuoteMeta("srtjmp"),     //     nyi: goto + same scope / global scope
-		regexp.QuoteMeta("if"),         // branching
-		regexp.QuoteMeta("when"),       //     nyi: variable watching
-		regexp.QuoteMeta("throw"),      // toss an error yo
-		regexp.QuoteMeta("try"),        // try but allow me to baseball huh an error
-		regexp.QuoteMeta("catch"),      // baseball huh an error
-		regexp.QuoteMeta("processing"), //     nyi: desugars into return + lngjmp back into the function; yield
-		regexp.QuoteMeta("constexpr"),  //     nyi: this expression can be evaluated at compiletime
+		"nil",        // null, active sentinel value
+		"func",       // for functions like in go
+		"class",      //     nyi: classes, PODs by default
+		"import",     //     nyi: self explanatory
+		"pure",       //     nyi: optimisation directive
+		"static",     //     nyi: non local storage declaration
+		"debug",      // prints the AST / relevant info at that location
+		"assert",     // crashes on bool expression being false
+		"switch",     //     nyi: hash search for conditions
+		"case",       //     nyi: individual cases for the hash search
+		"defer",      //     nyi: execution at the end of scope
+		"continue",   //     nyi: syntax sugar for ~goto~ loop / if not applies:
+		"delete",     //     nyi: storage deletion
+		"false",      // desugars to 0
+		"true",       // desugars to 1
+		"for",        // init + condition + step based loop
+		"while",      //     nyi: condition based loop, can be chained with do
+		"until",      //     nyi: reverse while but can be chained with do
+		"do",         //     nyi: execution + check based loop
+		"break",      //     nyi: stop loop execution
+		"goto",       //     nyi: deprecated (XDXD)
+		"lngjmp",     //     nyi: goto + explicit side entry into different scopes
+		"srtjmp",     //     nyi: goto + same scope / global scope
+		"if",         // branching
+		"when",       //     nyi: variable watching
+		"throw",      // toss an error yo
+		"try",        // try but allow me to baseball huh an error
+		"catch",      // baseball huh an error
+		"return",     // gives back a value to the callsite
+		"processing", //     nyi: desugars into return + lngjmp back into the function; yield
+		"constexpr",  //     nyi: this expression can be evaluated at compiletime
 	}, // LexemeKeyword
 	{
 		"\\s",
@@ -123,45 +141,73 @@ var lexeme_patterns = [][]string{
 		regexp.QuoteMeta("}"),
 	}, // LexemeDelim
 	{
-		"[0-9]*(?.)[0-9]+",
+		"[0-9]*(\\.)?[0-9]+", // https://regex101.com/
 	}, // LexemeNumeric
 	{
-		"\".*\"",
+		"\"(.+(\\\")?)*\"", // https://regex101.com/
 	}, // LexemeString
-	{
-		"\\/\\/.*?\n",
-		"\\/\\*.*?\\*\\/",
-	}, // LexemeComment
 	{
 		"[_a-zA-Z][_a-zA-Z0-9]*",
 	}, // LexemeSymbol
 } // [LexemeType][RegexPattern]
 
-type fileloc struct {
-	x, y int
-} // vec2<int>
-
-type Lexeme struct {
-	ltype    LexemeType
-	src_loc  fileloc // struct {x, y int} // oh lol this works
-	src_file string
+func LexemeTypeAsString(lt LexemeType) string {
+	switch lt {
+	case LexemeComment:
+		return "LexemeComment"
+	case LexemeOperator:
+		return "LexemeOperator"
+	case LexemeKeyword:
+		return "LexemeKeyword"
+	case LexemeWhiteSpc:
+		return "LexemeWhiteSpc"
+	case LexemeDelim:
+		return "LexemeDelim"
+	case LexemeNumeric:
+		return "LexemeNumeric"
+	case LexemeString:
+		return "LexemeString"
+	case LexemeSymbol:
+		return "LexemeSymbol"
+	// case LexemeBool:
+	// return "LexemeBool"
+	// case LexemeLiteral:
+	// return "LexemeLiteral"
+	case LexemeEOF:
+		return "LexemeEOF"
+	case LexemeError:
+		return "LexemeError"
+	default:
+		return "something went SERIOUSLY wrong"
+	}
 }
 
-func getLexemeType(fcons string, idx int) (LexemeType, error) {
+func getNextLexeme(fcons string, idx int) (LexemeType, LexemeLength, error) {
 	// honestly, i like Gos decision to not include while loops in the language
 	// even if that's a little backwards, for -> while -> goto (simply and usually)
+
+	// this also simplifies control flow, there is no function calling a function calling a function
+	// each function does one thing: this gets the next lexeme, including its "type"
+	// before, i would need to find the length of the subexpr
+	// https://whalelogic.io/posts/references/regex-go-guide/
+	// but Go doesn't seem to have a regex function which contains this
+	// so instead i specify that it should find the string _at the start_
 	if idx >= len(fcons) {
-		return LexemeEOF, nil
+		return LexemeEOF, 0, nil
 	}
 	for lex_type_idx := range len(lexeme_patterns) {
 		for pattern := range len(lexeme_patterns[lex_type_idx]) {
 			// https://zetcode.com/golang/regexp-quotemeta/
-			re := regexp.MustCompile(regexp.QuoteMeta(lexeme_patterns[lex_type_idx][pattern]))
+			// besides, this was a bug lul. i did regexp.QuoteMeta twice
+			re := regexp.MustCompile("^" + lexeme_patterns[lex_type_idx][pattern])
 			// https://stackoverflow.com/questions/28886616/convert-array-to-slice-in-go
 			// https://www.geeksforgeeks.org/go-language/strings-in-golang/
 			// len somehow didn't work lul, but it was a casting issue
-			if re.MatchString(fcons[idx:]) {
-				return LexemeType(lex_type_idx), nil
+			// https://pkg.go.dev/regexp#Regexp.FindString
+			if str := re.FindStringSubmatch(fcons[idx:]); str != nil {
+				// so FindStringSubmatch returns []string, not string
+				// which was cause for headache
+				return LexemeType(lex_type_idx), LexemeLength(len(str[0])), nil
 			}
 			// https://gobyexample.com/if-else
 			// oh and ternary isn't a thing either
@@ -172,39 +218,19 @@ func getLexemeType(fcons string, idx int) (LexemeType, error) {
 			// maybe because im older and sooooo much more mature
 		}
 	}
-	return LexemeError, nil
-}
-
-func getNextLexeme(fcons string, idx int) (LexemeType, LexemeLength, error) {
-	// for this to work I would need to find the length of the subexpr
-	// https://whalelogic.io/posts/references/regex-go-guide/
-	// but Go doesn't seem to have a regex function which contains this
-	INITIAL_LEXEME_TYPE, _ := getLexemeType(fcons, idx)
-	offset := 0
-	// i would need 2 post statements (assignment : new_type, and operation: increment offset)
-	// so i wont do either lul
-	// but then again, this for loop only calculates the length of the lexeme by matching the type
 	// what genuinely appals me is the fact that unary op postfix increment is legitimate syntax sugar
-	// for a single statement. It doesn't "return" anything like it does in C
+	// for a single statement. it doesn't "return" anything like it does in C
 	// in C you can "imagine" it as (offset += 1, offset), note the comma operator
+	// in the previous attempt, i had a for loop that checks for the type of the lexeme by checking the next char
+	// until a different lexeme type was returned. while this works conceptually, that isn't really necessary here
+	// we (you; dear voice in my head; and i) have a useful regex engine now
+	// i had another bug in the iteration that made it return negative numbers btw:
+	// why?
+	// idx is 0. i did idx - offset to find the length. So of course its negative
+	// but offset _is_ the length
+	// Ladies and gentlemen, a mathematician
 
-	// i know this line is long but the format says so and i follow the format
-	// although i would much prefer 2 spaces instead of 1 tab but tally ho lads innit
-	// the first issue is my exam in 10 days
-	// the second issue is this compiler isn't done
-	// the third issue is the fact that my go formatter is "nOt To My ExPeCtAtIoNs" (skill issue)
-
-	// okay somehow this returns negative numbers
-	// why the f### does it return negative numbers
-	// ...
-	// ...
-	// because offset is 0 and this returns the length, offset is the length itself
-	// not the new index. Ladies and gentlemen, a mathematician
-	for new_type := INITIAL_LEXEME_TYPE; new_type == INITIAL_LEXEME_TYPE && new_type != LexemeEOF; new_type, _ = getLexemeType(fcons, idx + offset) {
-		offset++
-	}
-	// now, at offset, there will be a new lexeme, so i acknowledge this and say that the lexeme is [idx, retval)
-	return INITIAL_LEXEME_TYPE, LexemeLength(offset), nil
+	return LexemeError, 1, nil
 }
 
 // a normalised file location is the raw byte index
@@ -212,7 +238,8 @@ func getNextLexeme(fcons string, idx int) (LexemeType, LexemeLength, error) {
 // it is cheaper to just pass the array instead of recomputing it each time
 func denormaliseFileLoc(fcons []string, loc int) (fileloc, error) {
 	line := 0
-	for file_idx := 0; loc > len(fcons[file_idx]); file_idx++ {
+	// stupid mistake
+	for file_idx := 0; file_idx < len(fcons) && file_idx > len(fcons[file_idx]); file_idx++ {
 		loc -= len(fcons[file_idx])
 		line++
 	}
@@ -226,7 +253,6 @@ func Lex(filepath string) ([]Lexeme, error) {
 	fcons, _ := os.ReadFile(filepath)
 	lines := strings.Split(string(fcons), "\n")
 	lexemes := []Lexeme{} // https://go.dev/wiki/SliceTricks, https://pkg.go.dev/golang.org/x/exp/slices
-	//lexemes = append(lexemes, Lexeme{LexemeNull, fileloc{3, 3}, "hello"})
 
 	file_idx := 0
 	FILE_LENGTH := len(fcons)
@@ -234,10 +260,14 @@ func Lex(filepath string) ([]Lexeme, error) {
 		// now i am getting OOB errors
 		lexeme_type, lexeme_length, _ := getNextLexeme(string(fcons), file_idx)
 		location, _ := denormaliseFileLoc(lines, file_idx)
-		println(string(fcons[file_idx:lexeme_length]))
-		println("---")
-		lexemes = append(lexemes, Lexeme{lexeme_type, location, string(fcons[file_idx:lexeme_length - 1])})
-		file_idx += int(lexeme_length) + 1
+		// https://go.dev/tour/moretypes/7e
+		// slices btw are indices like in python, not lengths. idk why i assumed otherwis
+		lexemes = append(lexemes, Lexeme{lexeme_type,
+			location,
+			filepath,
+			string(fcons)[file_idx : file_idx+int(lexeme_length)],
+		})
+		file_idx += int(lexeme_length)
 	}
 
 	return lexemes, nil
