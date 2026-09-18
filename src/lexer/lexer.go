@@ -2,6 +2,7 @@ package lexer
 
 import (
 	_ "errors"
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -57,7 +58,7 @@ var arr = [][]string {
 // but you cannot stop me
 // MARK: it is absolutely imperative that the LexemeType corresponds to the index in lexeme_patterns
 // I WROTE THIS COMMENT BUT I DIDNT FOLLOW IT
-var lexeme_patterns = [][]string{
+var LexemePatterns = [][]string{
 	{
 		"\\/\\/.*\n?", // according to regex101, this _should_ work
 		"\\/\\*.*?\\*\\/", // https://regex101.com/
@@ -91,7 +92,7 @@ var lexeme_patterns = [][]string{
 		regexp.QuoteMeta("*"),   // multiplication
 		regexp.QuoteMeta("/"),   // division
 		regexp.QuoteMeta("%"),   // modulation
-		regexp.QuoteMeta("\\"),  //     nyi: idk yet
+		regexp.QuoteMeta("\\"),  //     nyi: lambdas
 		regexp.QuoteMeta("`"),   //     nyi: homoiconicity
 		regexp.QuoteMeta("'"),   // char
 		regexp.QuoteMeta("#"),   //     nyi: to raw bytes
@@ -151,6 +152,11 @@ var lexeme_patterns = [][]string{
 	}, // LexemeSymbol
 } // [LexemeType][RegexPattern]
 
+func PrintLexeme(lexeme Lexeme) {
+	//fmt.Printf("%s @ (%d, %d) e %s, '%s'\n", lexer.LexemeTypeAsString(lexeme.Ltype), lexeme.Src_loc.X, lexeme.Src_loc.Y, lexeme.Src_file, lexeme.Raw_text)
+	fmt.Printf("%s '%s'\n", LexemeTypeAsString(lexeme.Ltype), lexeme.Raw_text)
+}
+
 func LexemeTypeAsString(lt LexemeType) string {
 	switch lt {
 	case LexemeComment:
@@ -195,11 +201,11 @@ func getNextLexeme(fcons string, idx int) (LexemeType, LexemeLength, error) {
 	if idx >= len(fcons) {
 		return LexemeEOF, 0, nil
 	}
-	for lex_type_idx := range len(lexeme_patterns) {
-		for pattern := range len(lexeme_patterns[lex_type_idx]) {
+	for lex_type_idx := range len(LexemePatterns) {
+		for pattern := range len(LexemePatterns[lex_type_idx]) {
 			// https://zetcode.com/golang/regexp-quotemeta/
 			// besides, this was a bug lul. i did regexp.QuoteMeta twice
-			re := regexp.MustCompile("^" + lexeme_patterns[lex_type_idx][pattern])
+			re := regexp.MustCompile("^" + LexemePatterns[lex_type_idx][pattern])
 			// https://stackoverflow.com/questions/28886616/convert-array-to-slice-in-go
 			// https://www.geeksforgeeks.org/go-language/strings-in-golang/
 			// len somehow didn't work lul, but it was a casting issue

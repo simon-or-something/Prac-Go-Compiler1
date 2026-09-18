@@ -316,6 +316,38 @@ This is also where the BNF is "checked", although there is no real "checking": y
 BNFs are not actually used in manual compiler writing, manual here meaning without parser generators or other funky nonsense
 BNFs just describe the language implemented, and don't really prescribe it (unless you use a parser generator)
 
+I am unsure whether I want to make a (lexeme stream) -> parse tree -> abstract syntax tree, or (lexeme stream) -> abstract syntax tree directly
+I can do both, skill isn't the issue. The issues are:
+- am I bothered enough
+- what does a parse tree win me that a direct AST generation doesn't?
+I'll make one, because currently I stated that I can, without there being proof of it
+Usually a PT (it's also called a concrete syntax tree) allows you to only focus on the AST, because the PT can be generated from a BNF
+As discussed above, I don't really do that here
+Another advantage I would assume is:
+because the parse tree contains the /real/ syntax while the AST contains the transformed syntax (so ~goto~ vs ~jump~),
+the CST /can/ be used to make tooling
+I am 98% sure AI will say "ASTs don't contain comments", but LLVM's AST does in an attempt to "stay faithful to the original source code"
+Besides, compilers aren't prescriptive, this is just standard practice: Stream (-> Tree) -> Tree -> Graph -> "Queue"
+It is naturally possible to do:
+- Stream -> "Queue" (assembly)
+  (Quotation marks: Instructions are executed like a queue, just without dequeue and instead a moving PC. It is still FILO)
+- Stream -> Binary Tree (LISPs)
+  (They're binary trees because the final form is symbolic expression tree which is a binary tree because each node has by force 2 children, at least by standard)
+It's a stream because you need to parse the file in order, and while you can probably pipeline it, the underlying data structure is always a stream:
+You need the atoms to be in order for the CST (if applicable) or AST (if, of course, you follow the established recipe)
+This is a learning experience for Go, so I won't do fancy nonsense here
+I will however make a CST, just to show that I can
+
+*** CST
+There are multiple ways to implement it:
+- make a type for every single lexeme and make interfaces for the specifics (mlcomm / slcomm, binop / unop, ...)
+- make an overarching type for each specific lexeme with syntactic specifics (Comm, BinaryOP, UnaryOp)
+Now I have 2 choices:
+1. make a tree out of the current syntax as is
+2. make the syntax tree like I would an AST and just pass the CST into the AST because for this there is no different frontend that needs standardisation
+
+*** AST
+
 ** Semana
 ** CodeGen
 ** Bytecode VM
