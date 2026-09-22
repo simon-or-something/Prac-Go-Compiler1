@@ -4,7 +4,6 @@
 
 AI Responses are explicitly listed under markdown
 
-Note that I don't yet have any formal / credible education in compilers
 All this is, is me having picked stuff up randomly throughout the years
 I refuse to follow tutorials because:
 1. tutorial hell
@@ -299,6 +298,16 @@ I fixed 3 bugs:
 3. FindStringSubmatch returns a ~[]string~ not a ~string~
    My lexemes were 1 long because I did ~len([]string)~ instead of ~len(string~
 Lexer is done, now I am in familiar territory
+
+Or you know what, screw this. I cannot call it done until I write some tests for it
+The "go"al (aha) isn't to write a compiler, the "go"al (aha aha) is to learn the language and become competent in Go
+I guess I don't like writing tests.
+One bug I was scared of facing that I let sleep in my subconscious: if you look at the word ~formative~, this gets caught by keyword and symbol.
+Or ~formation~, or ~formal~, or ~fortitude~ or ~fork~
+It catches ~for:LexemeKeyword~ and ~mative:LexemeSymbol~, even though that is not /technically/ valid
+It can be, though and allow the user to do something like fori=4to 69do
+
+
 ** Parser
 Let it be known that the goal of a parser is to (not in order):
 - create and check the structure for and of the code,
@@ -313,8 +322,10 @@ Simple compilers don't really need an AST, because unless you have fancy stuff l
 - or advanced semantic analysis
 you don't need a very detailed AST
 This is also where the BNF is "checked", although there is no real "checking": you define parse rules for the language, and the (e)BNF describes it
-BNFs are not actually used in manual compiler writing, manual here meaning without parser generators or other funky nonsense
+BNFs are also used in manual compiler writing, manual here meaning without parser generators or other funky nonsense
 BNFs just describe the language implemented, and don't really prescribe it (unless you use a parser generator)
+Apparently so, at least: I have decided to start consuming resources like courses and books, and in crafting interpreters chapter 5 they design a grammar
+It does happen, I didn't see any value in doing so myself because I want playroom and silly ideas.
 
 I am unsure whether I want to make a (lexeme stream) -> parse tree -> abstract syntax tree, or (lexeme stream) -> abstract syntax tree directly
 I can do both, skill isn't the issue. The issues are:
@@ -326,7 +337,7 @@ As discussed above, I don't really do that here
 Another advantage I would assume is:
 because the parse tree contains the /real/ syntax while the AST contains the transformed syntax (so ~goto~ vs ~jump~),
 the CST /can/ be used to make tooling
-I am 98% sure AI will say "ASTs don't contain comments", but LLVM's AST does in an attempt to "stay faithful to the original source code"
+I am 98% sure AI will say "ASTs don't contain comments", but clang's AST does in an attempt to "stay faithful to the original source code"
 Besides, compilers aren't prescriptive, this is just standard practice: Stream (-> Tree) -> Tree -> Graph -> "Queue"
 It is naturally possible to do:
 - Stream -> "Queue" (assembly)
