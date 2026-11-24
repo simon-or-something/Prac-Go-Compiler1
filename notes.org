@@ -9,9 +9,31 @@ I refuse to follow tutorials because:
 1. tutorial hell
 2. I should know my stuff to such an extent that I can follow my knowledge blindly
 
+About the break in commits: there are a few forms of skill issue, one of which, coined by my friend from university, is the term "specialist".
+A specialist (for purposes of this paragraph and not outside): /someone that knows enough to get themselves into trouble, but doesn't know enough to get back out/.
+This is my case: I have no specific to compilers education from which I have learnt this, I have just picked this stuff up in passing.
+I had thought that, for the sake of purity, I would have to do it blindly; the pretence being this:
+> /back then, people didn't have the learning materials I have now, so what justifies me using them?/
+I didn't have an answer, until recently: in not using materials / "damage reports" / "incident logs", I would go through the entire history of compilers.
+Although this is in fact interesting to me, it doesn't make sense to do so. A bug in my lexer (as the astute of you) would recognise, is the unchecked issue of maximum munch.
+Why does maximum munch exist? "sometime, in the 20^{th} century, someones lexer treated >= / == as separate tokens" (probably).
+Someone else in the 21^{st} century (me) has endured the (assumed) same fate.
+I don't know why this hasn't occurred to me, all my implementations had the same spirit which worked, assume shortest, but be open to be corrected.
+This is mentioned... somewhere in the red dragon book, from which I watched this: http://youtu.be/bt26YlTG7gy, (Purple dragon exists too).
+The challenge then becomes asking "How did this rule get formed?" retroactively, i.e., "What was the incident that formed this?"
+If I don't experience the incident myself, I at least have to know about it, and learning about it happens via books or the materials listed... a few sentences prior.
+Although this compiler is not primarily for educational purposes (I have written compilers before), but this realisation had only occurred recently, and I would like to get serious.
+
+I will also mention this: someone has a tutorial online on "writing a compiler in Go". I will not use this resource, nor am I following the page.
+A friend of mine wants to program something in Go, another one (@affanhamid) has mentioned Go is a great language to learn.
+As stated in the README, the goal of this project was to learn Go;
+> A small practice compiler written in Go to learn and practice Golang. Notes are attached in an org file.
+Any compiler I write is worth it in my books, even if it gets tossed into my ~.../Graveyard/Compilers/~
+
 ** Todo:
 *** Lexer:
 - error catching
+  - maximum munch
 - make a map for lexeme type to its regex
 - not yet implemented
 
@@ -313,7 +335,7 @@ Let it be known that the goal of a parser is to (not in order):
 - create and check the structure for and of the code,
 - create a uniform interface for frontends to interface
 - reorganise code and to catch errors
-- do syntax transformations (Rusts macro system + homoiconicity, although LISP doesn't need to a standard AST, you can do an S-Expr tree immediately)
+- do syntax transformations (Rusts macro system + homoiconicity, although LISP doesn't need to a standard AST, you can do an S-Expr tree immediately after the CST)
 - advanced semantic analysis
 Simple compilers don't really need an AST, because unless you have fancy stuff like
 - the need for a uniform backend,
@@ -324,7 +346,7 @@ you don't need a very detailed AST
 This is also where the BNF is "checked", although there is no real "checking": you define parse rules for the language, and the (e)BNF describes it
 BNFs are also used in manual compiler writing, manual here meaning without parser generators or other funky nonsense
 BNFs just describe the language implemented, and don't really prescribe it (unless you use a parser generator)
-Apparently so, at least: I have decided to start consuming resources like courses and books, and in crafting interpreters chapter 5 they design a grammar
+Apparently so, at least: I have decided to start consuming resources like courses and books, and in [[https://craftinginterpretes.com][crafting interpreters]] chapter 5 they design a grammar
 It does happen, I didn't see any value in doing so myself because I want playroom and silly ideas.
 
 I am unsure whether I want to make a (lexeme stream) -> parse tree -> abstract syntax tree, or (lexeme stream) -> abstract syntax tree directly
@@ -338,10 +360,11 @@ Another advantage I would assume is:
 because the parse tree contains the /real/ syntax while the AST contains the transformed syntax (so ~goto~ vs ~jump~),
 the CST /can/ be used to make tooling
 I am 98% sure AI will say "ASTs don't contain comments", but clang's AST does in an attempt to "stay faithful to the original source code"
-Besides, compilers aren't prescriptive, this is just standard practice: Stream (-> Tree) -> Tree -> Graph -> "Queue"
+Besides, compilers aren't prescriptive, this is just standard practice: Stream (-> Tree) -> Tree -> Graph (-> Graph)* -> "Stack"
 It is naturally possible to do:
-- Stream -> "Queue" (assembly)
-  (Quotation marks: Instructions are executed like a queue, just without dequeue and instead a moving PC. It is still FILO)
+- Stream -> "FIFO" (assembly)
+  (Quotation marks: Instructions are executed like a stack, just without pop and instead a moving PC. It still can FIFO)
+  (It can also be a queue, depending on how you insert instructions, from the "back" or the "front")
 - Stream -> Binary Tree (LISPs)
   (They're binary trees because the final form is symbolic expression tree which is a binary tree because each node has by force 2 children, at least by standard)
 It's a stream because you need to parse the file in order, and while you can probably pipeline it, the underlying data structure is always a stream:
@@ -351,8 +374,8 @@ I will however make a CST, just to show that I can
 
 *** CST
 There are multiple ways to implement it:
-- make a type for every single lexeme and make interfaces for the specifics (mlcomm / slcomm, binop / unop, ...)
-- make an overarching type for each specific lexeme with syntactic specifics (Comm, BinaryOP, UnaryOp)
+- make a type for every single lexeme and make interfaces for the specifics (~mlcomm~ / ~slcomm~, ~binop~ / ~unop~, ...)
+- make an overarching type for each specific lexeme with syntactic specifics (~Comm~, ~BinaryOP~, ~UnaryOp~)
 Now I have 2 choices:
 1. make a tree out of the current syntax as is
 2. make the syntax tree like I would an AST and just pass the CST into the AST because for this there is no different frontend that needs standardisation
