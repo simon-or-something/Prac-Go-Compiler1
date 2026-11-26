@@ -329,6 +329,10 @@ Or ~formation~, or ~formal~, or ~fortitude~ or ~fork~
 It catches ~for:LexemeKeyword~ and ~mative:LexemeSymbol~, even though that is not /technically/ valid
 It can be, though and allow the user to do something like fori=4to 69do
 
+This is however always the same implementation I write for the lexer
+I decided to rewrite the lexer, with a different approach: select the mode immediately
+For example, instead of keeping track of state externally via a variable and checking for variable changes, on the first matching symbol I enter a munching loop
+I will probably revert it later on just to have both once everything else works
 
 ** Parser
 Let it be known that the goal of a parser is to (not in order):
