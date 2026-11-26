@@ -334,6 +334,163 @@ I decided to rewrite the lexer, with a different approach: select the mode immed
 For example, instead of keeping track of state externally via a variable and checking for variable changes, on the first matching symbol I enter a munching loop
 I will probably revert it later on just to have both once everything else works
 
+I went down a brief rabbithole of different radii:
+1. Unary
+2. Binary
+3. Ternary (I had thought it would be called trinary, but ternary makes sense: the ternary operator means 3 argument operator).
+   It is not incorrect to call it trinary
+4. Quartenary
+5. Quinary (I thought pentinary, but this makes sense: it is called Quartenary, not Tetranary)
+6. Senary (It is also called Seximal. Besides, what is this: https://www.seximal.net/)
+7. /So apparently there is no... standard term for base 7, I thought septimal / heptimal, but that does not seem to be the case/
+   I have found https://numberblocks-into-the-different-bases-ii.fandom.com/wiki/Heptimal
+   Wikipedia redirects from /Septenary/ (https://en.wikipedia.org/w/index.php?title=Septenary), so I guess I will lay down my arms here
+8. Octal, we know and love octal
+9. Nonal / Nonary. A trick I learnt in middle-school was to count on my fingers the multiplicand of 9, so III_I IIIII would be 4 x 9 which is 36.
+   This is not nonary though, that's just a fun fact
+10. Decimal. Base 'A', because "every base is base 10". No kidding
+11. Undecimal, aka. unodecimal and undenary
+12. Duodecimal, aka. dozenal. Like base 6 but... more, then again, duodecimal is like undecimal but more as well
+13. Tridecimal, triskaideka is Greek and means 13, from which you get triskaidekaphobia, or even worse, /paraskevidekatriaphobia/.
+    Modern Greek: /Paraskevi/ = Friday, /dekatreis/ = 13.
+    There is also /Friggatriskaidekaphobia/, where Frigga comes from Old Norse, where the rest comes from ancient Greek.
+    Neat
+14. Quattuordecimal: I actually knew this because of quattuorvigintillion, something the YouTuber "VSauce" mentioned once.
+    "It's a... Big Decimal" - Kai Lentit
+15. Quindecimal, pentadecimal. Used in telephony routing apparently, something I should know if I write computer networks next semester
+16. Hexadecimal. No notes
+You, dear reader, get the point:
+https://en.wikipedia.org/wiki/List_of_numeral_systems#Standard_positional_numeral_systems
+
+#+BEGIN_EXPORT markdown
+# Prompt:
+How do i do something like
+
+```python
+char in "abcd.+-"
+```
+
+In go? I would like to check if the char is any of specified specific characters
+
+# Response:
+The idiomatic way is `strings.ContainsRune`:
+
+```go
+import "strings"
+
+if strings.ContainsRune("abcd.+-", c) { // c is a rune
+    // ...
+}
+```
+
+If you're working with a `byte` (for example from `s[i]`), use `strings.IndexByte`:
+
+```go
+if strings.IndexByte("abcd.+-", b) >= 0 {
+    // ...
+}
+```
+
+**A `switch` also works well**, especially inside a function or when you branch on the character anyway:
+
+```go
+switch c {
+case 'a', 'b', 'c', 'd', '.', '+', '-':
+    // matched
+}
+```
+
+Many Go developers prefer this form. It's explicit, it doesn't allocate, and the compiler optimizes it well.
+
+**A few notes:**
+
+- **Strings vs. characters:** In Go, `"abc"` is a string and `'a'` is a rune (a Unicode code point, really an `int32`). Ranging over a string gives you runes: `for _, c := range s { ... }`.
+- **`strings.Contains` won't work here:** It takes a string, not a rune. `strings.Contains("abcd.+-", string(c))` would work, but it's clumsier.
+- **Checking a whole string:** If you want to know whether a string contains *any* of those characters, use `strings.ContainsAny(s, "abcd.+-")`. If you want the position, use `strings.IndexAny`.
+- **Hot loops:** If you're checking millions of characters against a fixed set, the fastest option is a lookup table like `var allowed [256]bool`. For normal code, `ContainsRune` or `switch` is the right choice.
+#+END_EXPORT
+I acknowledge that the switch can easily be optimised by the compiler, however, I ignore that:
+I have to use an ~if~ statement anyway: if numeric base was already seen then don't.
+I /could/ implement a completely silly idea and let people (me) do something like ~0o43xff~ by splitting on delimiters,
+but that makes the ~b~ and ~d~ contextual (binary and hexadecimal, and dodecimal and hexadecimal respectively).
+
+#+BEGIN_EXPORT markdown
+# Prompt:
+Which language has
+
+```
+var = switch (expr) { case 1: val1 case 2: val2 }
+```
+
+And does go have that too?
+
+# Response:
+Several languages have switch expressions. The one closest to what you wrote is **Swift** (5.9+), which uses exactly that `case 1: val1` shape:
+
+```swift
+let name = switch code {
+case 1: "one"
+case 2: "two"
+default: "other"
+}
+```
+
+Others with the same idea:
+
+- **Java** (14+): `var name = switch (code) { case 1 -> "one"; case 2 -> "two"; default -> "other"; };`
+- **C#** (8+): `var name = code switch { 1 => "one", 2 => "two", _ => "other" };`
+- **Kotlin**: `val name = when (code) { 1 -> "one"; 2 -> "two"; else -> "other" }`
+- **Rust** / **Zig**: `match` / `switch` are expressions, e.g. `let name = match code { 1 => "one", 2 => "two", _ => "other" };`
+
+**Go doesn't have this.** In Go, `switch` is a statement, not an expression, and Go has no ternary operator either. Proposals to add switch expressions have been turned down, because the Go team prefers having one obvious way to write control flow. Here are the idiomatic ways to do it in Go:
+
+**1. Declare the variable, then assign in a switch.** This is the most common way:
+
+```go
+var name string
+switch code {
+case 1:
+	name = "one"
+case 2:
+	name = "two"
+default:
+	name = "other"
+}
+```
+
+**2. Move it into a small function.** This is very idiomatic, especially when you need the mapping more than once:
+
+```go
+func codeName(code int) string {
+	switch code {
+	case 1:
+		return "one"
+	case 2:
+		return "two"
+	default:
+		return "other"
+	}
+}
+```
+
+**3. Use a map lookup** when the cases are just static data:
+
+```go
+var codeNames = map[int]string{1: "one", 2: "two"}
+
+name, ok := codeNames[code]
+if !ok {
+	name = "other"
+}
+```
+
+You'll sometimes see an immediately-invoked func literal (`name := func() string { switch ... }()`) that copies an expression switch. It works, but most Go reviewers would call it unidiomatic, so use option 1 or 2 instead.
+#+END_EXPORT
+That's not surprising, but disappointing nonetheless
+
+I should consider implementing custom errors: for the lexers numerics, if a numeric goes like 0x and it ends there, then it should be invalid
+I will do that another time
+
 ** Parser
 Let it be known that the goal of a parser is to (not in order):
 - create and check the structure for and of the code,
